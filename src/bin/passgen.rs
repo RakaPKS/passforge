@@ -1,4 +1,9 @@
+use std::process::Output;
+
 use clap::Parser;
+use passgen::{
+    Generator, Length, PassphraseConfig, PassphraseGenerator, PasswordConfig, PasswordGenerator,
+};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -8,7 +13,7 @@ struct Cli {
     #[arg(
         short = 'l',
         long,
-        default_value_t = 18,
+        default_value_t = PasswordConfig::DEFAULT_LENGTH,
         long = "length",
         alias = "min-length"
     )]
@@ -34,16 +39,16 @@ struct Cli {
     #[arg(short = 's', long = "no-symbols", alias = "ns")]
     no_symbols: bool,
 
-    /// Generate passphrase instead (Supports -w/--words, --seperator and --evaluate)
+    /// Generate passphrase instead (Supports -c/--count -w/--words, --seperator and --evaluate)
     #[arg(short = 'p', long)]
     passphrase: bool,
 
     /// Number of words in the passphrase (only applicable with --passphrase). Default = 4
-    #[arg(short = 'w', long, default_value_t = 4)]
+    #[arg(short = 'w', long, default_value_t = PassphraseConfig::DEFAULT_WORDS)]
     words: usize,
 
     /// Separator for words in passphrase (only applicable with --passphrase)
-    #[arg(long, default_value = "-")]
+    #[arg(long, default_value = PassphraseConfig::DEFAULT_SEPARATOR)]
     separator: String,
 
     /// Show password strength evaluation
@@ -51,6 +56,63 @@ struct Cli {
     evaluate_strength: bool,
 }
 
-fn main() {
-    let _cli = Cli::parse();
+fn generate_items<G: Generator>(
+    generator: &G,
+    config: &G::Config,
+    count: usize,
+    evaluate_strength: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let items = if count > 1 {
+        generator.generate_multiple(config, count)?
+    } else {
+        vec![generator.generate(config)?]
+    };
+
+    for item in items {
+        println!("{}", item);
+        if evaluate_strength {
+            println!("{}", generator.evaluate_strength(&item)?);
+        }
+    }
+
+    Ok(())
+}
+
+fn gen_password(input: Cli) -> Result<(), Box<dyn std::error::Error>> {
+    let length = match input.max_length {
+        Some(max) if max > input.min_length => Length::Range(input.min_length..=max),
+        Some(max) if max == input.min_length => Length::Single(input.min_length),
+        Some(_) => {
+            return Err("Maximum length must be greater than or equal to minimum length".into())
+        }
+        None => Length::Single(input.min_length),
+    };
+
+    let config = PasswordConfig::new(
+        length,
+        input.evaluate_strength,
+        !input.no_capitals,
+        !input.no_numbers,
+        !input.no_symbols,
+    );
+
+    let generator = PasswordGenerator;
+    generate_items(&generator, &config, input.count, input.evaluate_strength)
+}
+
+fn gen_passphrase(input: Cli) -> Result<(), Box<dyn std::error::Error>> {
+    let config = PassphraseConfig::new(input.words, input.separator, input.evaluate_strength);
+
+    let generator = PassphraseGenerator;
+    generate_items(&generator, &config, input.count, input.evaluate_strength)
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let cli = Cli::parse();
+
+    if cli.passphrase {
+        gen_passphrase(cli)
+    } else {
+        gen_password(cli)
+    }
 }

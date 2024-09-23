@@ -106,15 +106,16 @@ impl PasswordConfigBuilder {
 #[derive(Debug, Clone)]
 pub struct PassphraseConfig {
     words: usize,
-    separator: char,
+    separator: String,
     evaluate_strength: bool,
 }
 
 impl PassphraseConfig {
     pub const DEFAULT_WORDS: usize = 4;
-    pub const DEFAULT_SEPARATOR: char = '-';
+    pub const DEFAULT_SEPARATOR: &'static str = "-";
     pub const DEFAULT_EVALUATE_STRENGTH: bool = false;
-    pub fn new(words: usize, separator: char, evaluate_strength: bool) -> Self {
+
+    pub fn new(words: usize, separator: String, evaluate_strength: bool) -> Self {
         Self {
             words,
             separator,
@@ -128,7 +129,7 @@ impl PassphraseConfig {
 #[derive(Default)]
 pub struct PassphraseConfigBuilder {
     words: Option<usize>,
-    separator: Option<char>,
+    separator: Option<String>,
     evaluate_strength: Option<bool>,
 }
 
@@ -138,7 +139,7 @@ impl PassphraseConfigBuilder {
         self
     }
 
-    pub fn separator(mut self, sep: char) -> Self {
+    pub fn separator(mut self, sep: String) -> Self {
         self.separator = Some(sep);
         self
     }
@@ -153,7 +154,7 @@ impl PassphraseConfigBuilder {
             words: self.words.unwrap_or(PassphraseConfig::DEFAULT_WORDS),
             separator: self
                 .separator
-                .unwrap_or(PassphraseConfig::DEFAULT_SEPARATOR),
+                .unwrap_or(PassphraseConfig::DEFAULT_SEPARATOR.to_string()),
             evaluate_strength: self
                 .evaluate_strength
                 .unwrap_or(PassphraseConfig::DEFAULT_EVALUATE_STRENGTH),
