@@ -1,12 +1,7 @@
 mod config;
+mod generator;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+pub use config::{
+    PassphraseConfig, PassphraseConfigBuilder, PasswordConfig, PasswordConfigBuilder,
+};
+pub use generator::password::{generate_multiple_passwords, generate_password};
