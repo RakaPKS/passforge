@@ -3,7 +3,8 @@ use clap::Parser;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
-    /// Length of the password, if supplied with --max-length, this becomes the minimum length
+    /// Length of the password, if supplied with --max-length, this becomes the minimum length.
+    /// Default = 18
     #[arg(
         short = 'l',
         long,
@@ -17,7 +18,7 @@ struct Cli {
     #[arg(long = "max-length")]
     max_length: Option<usize>,
 
-    /// Number of passwords to generate
+    /// Number of passwords to generate. Default = 1
     #[arg(short, long, default_value_t = 1)]
     count: usize,
 
@@ -37,7 +38,7 @@ struct Cli {
     #[arg(short = 'p', long)]
     passphrase: bool,
 
-    /// Number of words in the passphrase (only applicable with --passphrase)
+    /// Number of words in the passphrase (only applicable with --passphrase). Default = 4
     #[arg(short = 'w', long, default_value_t = 4)]
     words: usize,
 

@@ -1,6 +1,4 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+mod config;
 
 #[cfg(test)]
 mod tests {
