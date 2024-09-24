@@ -16,7 +16,7 @@ impl Generator for PasswordGenerator {
     type Config = PasswordConfig;
     type Output = String;
 
-    fn generate(&self, config: &Self::Config) -> Result<Self::Output, Box<dyn std::error::Error>> {
+    fn generate(config: &Self::Config) -> Result<Self::Output, Box<dyn std::error::Error>> {
         // Define character sets as byte slices for memory efficiency
 
         let mut rng = rand::thread_rng();
@@ -59,13 +59,14 @@ impl Generator for PasswordGenerator {
     }
 
     fn generate_multiple(
-        &self,
         config: &Self::Config,
         amount: usize,
     ) -> Result<Vec<Self::Output>, Box<dyn std::error::Error>> {
         if amount <= 1 {
             return Err("Amount cannot be smaller than 1".into());
         }
-        (0..amount).map(|_| self.generate(config)).collect()
+        (0..amount)
+            .map(|_| PasswordGenerator::generate(config))
+            .collect()
     }
 }

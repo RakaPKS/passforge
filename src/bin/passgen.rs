@@ -1,9 +1,9 @@
-use std::fmt::Display;
+use std::{fmt::Display, path::PathBuf, process};
 
 use clap::Parser;
 use passgen::{
     Generator, Length, PassphraseConfig, PassphraseGenerator, PasswordConfig, PasswordGenerator,
-    StrengthEvaluator, ZxcvbnAnalysis,
+    StrengthEvaluator, WordList, ZxcvbnAnalysis,
 };
 
 #[derive(Parser, Debug)]
@@ -40,7 +40,7 @@ struct Cli {
     #[arg(short = 's', long = "no-symbols", alias = "ns")]
     no_symbols: bool,
 
-    /// Generate passphrase instead (Supports -c/--count -w/--words, --seperator and --evaluate)
+    /// Generate passphrase instead (Supports -c/--count -w/--words, --seperator --word-list and --evaluate)
     #[arg(short = 'p', long)]
     passphrase: bool,
 
@@ -52,17 +52,21 @@ struct Cli {
     #[arg(long, default_value = PassphraseConfig::DEFAULT_SEPARATOR)]
     separator: String,
 
+    /// Path to a custom word list file for passphrase generation
+    #[arg(long = "word-list", value_name = "FILE")]
+    word_list: Option<PathBuf>,
+
     /// Show password strength evaluation
     #[arg(short = 'e', long = "evaluate-strength")]
     evaluate_strength: bool,
 }
 
 fn generate_items<G, S>(
-    generator: &G,
+    _: &G,
     config: &G::Config,
     count: usize,
     evaluate_strength: bool,
-    _strength_evaluator: &S,
+    _: &S,
 ) -> Result<(), Box<dyn std::error::Error>>
 where
     G: Generator,
@@ -71,9 +75,9 @@ where
     S::Output: Display,
 {
     let items = if count > 1 {
-        generator.generate_multiple(config, count)?
+        G::generate_multiple(config, count)?
     } else if count == 1 {
-        vec![generator.generate(config)?]
+        vec![G::generate(config)?]
     } else {
         return Err("Count cannot be smaller than 1".into());
     };
@@ -122,7 +126,12 @@ fn gen_password(input: Cli) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn gen_passphrase(input: Cli) -> Result<(), Box<dyn std::error::Error>> {
-    let config = PassphraseConfig::new(input.words, input.separator);
+    let word_list = match input.word_list {
+        Some(path) => WordList::Custom(path),
+        None => WordList::Default,
+    };
+
+    let config = PassphraseConfig::new(input.words, input.separator, word_list);
 
     let generator = PassphraseGenerator;
     let strength_evaluator = ZxcvbnAnalysis;
@@ -135,12 +144,17 @@ fn gen_passphrase(input: Cli) -> Result<(), Box<dyn std::error::Error>> {
     )
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() {
     let cli = Cli::parse();
 
-    if cli.passphrase {
+    let err = if cli.passphrase {
         gen_passphrase(cli)
     } else {
         gen_password(cli)
+    };
+
+    if err.is_err() {
+        process::exit(1)
     }
+    process::exit(0)
 }

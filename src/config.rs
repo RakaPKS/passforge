@@ -1,4 +1,4 @@
-use std::ops::RangeInclusive;
+use std::{ops::RangeInclusive, path::PathBuf};
 
 #[derive(Debug, Clone)]
 pub struct PasswordConfig {
@@ -88,16 +88,21 @@ impl PasswordConfigBuilder {
 
 #[derive(Debug, Clone)]
 pub struct PassphraseConfig {
-    words: usize,
-    separator: String,
+    pub words: usize,
+    pub separator: String,
+    pub word_list: WordList,
 }
 
 impl PassphraseConfig {
     pub const DEFAULT_WORDS: usize = 6;
     pub const DEFAULT_SEPARATOR: &'static str = "-";
 
-    pub fn new(words: usize, separator: String) -> Self {
-        Self { words, separator }
+    pub fn new(words: usize, separator: String, word_list: WordList) -> Self {
+        Self {
+            words,
+            separator,
+            word_list,
+        }
     }
     pub fn builder() -> PassphraseConfigBuilder {
         PassphraseConfigBuilder::default()
@@ -107,6 +112,7 @@ impl PassphraseConfig {
 pub struct PassphraseConfigBuilder {
     words: Option<usize>,
     separator: Option<String>,
+    word_list: Option<WordList>,
 }
 
 impl PassphraseConfigBuilder {
@@ -120,12 +126,24 @@ impl PassphraseConfigBuilder {
         self
     }
 
+    pub fn word_list(mut self, wl: WordList) -> Self {
+        self.word_list = Some(wl);
+        self
+    }
+
     pub fn build(self) -> PassphraseConfig {
         PassphraseConfig {
             words: self.words.unwrap_or(PassphraseConfig::DEFAULT_WORDS),
             separator: self
                 .separator
                 .unwrap_or(PassphraseConfig::DEFAULT_SEPARATOR.to_string()),
+            word_list: self.word_list.unwrap_or(WordList::Default),
         }
     }
+}
+
+#[derive(Clone, Debug)]
+pub enum WordList {
+    Default,
+    Custom(PathBuf),
 }
