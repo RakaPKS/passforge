@@ -1,3 +1,10 @@
+
+//! PassForge CLI
+//!
+//! This is the main entry point for the PassForge command-line interface.
+//! It parses command-line arguments and calls the appropriate PassForge
+//! library functions to generate passwords or passphrases.
+
 use std::{fmt::Display, path::PathBuf, process};
 
 use clap::Parser;
@@ -7,6 +14,7 @@ use passforge::{
     PasswordGenerator, StrengthEvaluator, WordList, ZxcvbnAnalysis,
 };
 
+/// CLI argument structure
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
@@ -67,44 +75,30 @@ struct Cli {
     preset: Option<String>,
 }
 
-fn generate_items<G, S>(
-    _: &G,
-    config: &G::Config,
-    count: usize,
-    evaluate_strength: bool,
-    _: &S,
-) -> Result<(), PassForgeError>
-where
-    G: Generator,
-    G::Output: Display,
-    S: StrengthEvaluator<Input = String>,
-    S::Output: Display,
-{
-    let items = if count > 1 {
-        G::generate_multiple(config, count)?
-    } else if count == 1 {
-        vec![G::generate(config)?]
-    } else {
-        return Err(PassForgeError::InvalidGenAmount(
-            "Count cannot be smaller than 1".into(),
-        ));
-    };
-
-    for item in items {
-        println!("{}", item);
-        if evaluate_strength {
-            match item.to_string().parse() {
-                Ok(password) => match S::evaluate(&password) {
-                    Ok(evaluation) => println!("Strength: {}", evaluation),
-                    Err(e) => eprintln!("Error evaluating strength: {}", e),
-                },
-                Err(_) => eprintln!("Unable to evaluate strength for this type of output"),
-            }
-        }
+// Helper functions
+fn parse_preset(preset_str: &str) -> Result<ConfigPreset, PassForgeError> {
+    match preset_str.to_lowercase().as_str() {
+        "weak" => Ok(ConfigPreset::Weak),
+        "average" => Ok(ConfigPreset::Average),
+        "strong" => Ok(ConfigPreset::Strong),
+        _ => Err(PassForgeError::InvalidConfig(
+            "Invalid preset. Choices are: Weak, Average, Strong".into(),
+        )),
     }
-
-    Ok(())
 }
+
+fn parse_length(min: usize, max: Option<usize>) -> Result<Length, PassForgeError> {
+    match max {
+        Some(max) if max > min => Ok(Length::Range(min..=max)),
+        Some(max) if max == min => Ok(Length::Single(min)),
+        Some(_) => Err(PassForgeError::InvalidLength(
+            "Maximum length must be greater than or equal to minimum length".into(),
+        )),
+        None => Ok(Length::Single(min)),
+    }
+}
+
+// Main generation functions
 fn gen_password(input: Cli) -> Result<(), PassForgeError> {
     let config = if let Some(preset_str) = input.preset {
         let preset = parse_preset(&preset_str)?;
@@ -116,7 +110,7 @@ fn gen_password(input: Cli) -> Result<(), PassForgeError> {
             !input.no_capitals,
             !input.no_numbers,
             !input.no_symbols,
-        )
+        ) 
     };
 
     let generator = PasswordGenerator;
@@ -153,27 +147,47 @@ fn gen_passphrase(input: Cli) -> Result<(), PassForgeError> {
     )
 }
 
-fn parse_preset(preset_str: &str) -> Result<ConfigPreset, PassForgeError> {
-    match preset_str.to_lowercase().as_str() {
-        "weak" => Ok(ConfigPreset::Weak),
-        "average" => Ok(ConfigPreset::Average),
-        "strong" => Ok(ConfigPreset::Strong),
-        _ => Err(PassForgeError::InvalidConfig(
-            "Invalid preset. Choices are: Weak, Average, Strong".into(),
-        )),
+fn generate_items<G, S>(
+    _: &G,
+    config: &G::Config,
+    count: usize,
+    evaluate_strength: bool,
+    _: &S,
+) -> Result<(), PassForgeError>
+where
+    G: Generator,
+    G::Output: Display,
+    S: StrengthEvaluator<Input = String>,
+    S::Output: Display,
+{
+    let items = match count {
+        0 => {
+            return Err(PassForgeError::InvalidGenAmount(
+                "Count cannot be smaller than 1".into(),
+            ))
+        }
+        1 => vec![G::generate(config)?],
+        _ => G::generate_multiple(config, count)?,
+    };
+
+    for item in items {
+        println!("{}", item);
+        if evaluate_strength {
+            match item.to_string().parse() {
+                Ok(password) => match S::evaluate(&password) {
+                    Ok(evaluation) => println!("Strength: {}", evaluation),
+                    Err(e) => eprintln!("Error evaluating strength: {}", e),
+                },
+                Err(_) => eprintln!("Unable to evaluate strength for this type of output"),
+            }
+        }
     }
+
+    Ok(())
 }
 
-fn parse_length(min: usize, max: Option<usize>) -> Result<Length, PassForgeError> {
-    match max {
-        Some(max) if max > min => Ok(Length::Range(min..=max)),
-        Some(max) if max == min => Ok(Length::Single(min)),
-        Some(_) => Err(PassForgeError::InvalidLength(
-            "Maximum length must be greater than or equal to minimum length".into(),
-        )),
-        None => Ok(Length::Single(min)),
-    }
-}
+
+
 fn main() {
     let cli = Cli::parse();
 

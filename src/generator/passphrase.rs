@@ -1,3 +1,8 @@
+//! This module implements passphrase generation functionality.
+//!
+//! It provides a `PassphraseGenerator` struct that implements the `Generator` trait,
+//! allowing for flexible and customizable passphrase generation using word lists.
+
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
@@ -7,11 +12,25 @@ use crate::PassForgeError;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
+/// The default word list used for passphrase generation.
 const DEFAULT_WORD_LIST: &str = include_str!("../../resources/eff_large_wordlist.txt");
 
+/// Struct for generating passphrases based on specified configurations.
 pub struct PassphraseGenerator;
 
 impl PassphraseGenerator {
+    /// Creates a passphrase from the given word list and configuration.
+    ///
+    /// # Arguments
+    ///
+    /// * `word_list` - A vector of words to choose from.
+    /// * `words` - The number of words to include in the passphrase.
+    /// * `separator` - The string used to separate words in the passphrase.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing the generated passphrase as a `String` if successful,
+    /// or a `PassForgeError` if an error occurred during generation.
     fn create_passphrase(
         word_list: &Vec<String>,
         words: usize,
@@ -27,6 +46,16 @@ impl PassphraseGenerator {
         Ok(passphrase_words.join(separator))
     }
 
+    /// Loads and processes the word list based on the specified `WordList` type.
+    ///
+    /// # Arguments
+    ///
+    /// * `word_list` - A reference to the `WordList` enum specifying the source of words.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing a vector of words if successful,
+    /// or a `PassForgeError` if an error occurred during loading or processing.
     fn get_word_list(word_list: &WordList) -> Result<Vec<String>, PassForgeError> {
         let words: Vec<String> = PassphraseGenerator::load_file(word_list)?
             .into_iter()
@@ -46,13 +75,24 @@ impl PassphraseGenerator {
         }
         Ok(words)
     }
+
+    /// Loads the word list file into memory.
+    ///
+    /// # Arguments
+    ///
+    /// * `word_list` - A reference to the `WordList` enum specifying the source of words.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing a vector of lines from the file if successful,
+    /// or a `PassForgeError` if an error occurred during file reading.
     fn load_file(word_list: &WordList) -> Result<Vec<String>, PassForgeError> {
         let line = match word_list {
             WordList::Default => DEFAULT_WORD_LIST.lines().map(String::from).collect(),
             WordList::Custom(path) => {
                 let file = File::open(path)?;
                 let reader = BufReader::new(file);
-                reader.lines().filter_map(Result::ok).collect()
+                reader.lines().map_while(Result::ok).collect()
             }
         };
         Ok(line)
@@ -63,9 +103,23 @@ impl Generator for PassphraseGenerator {
     type Config = PassphraseConfig;
     type Output = String;
 
+    /// Generates a single passphrase based on the provided configuration.
+    ///
+    /// # Arguments
+    ///
+    /// * `config` - A reference to the `PassphraseConfig` specifying generation parameters.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing the generated passphrase as a `String` if successful,
+    /// or a `PassForgeError` if an error occurred during generation.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if the specified number of words is less than or equal to 1.
     fn generate(config: &Self::Config) -> Result<Self::Output, PassForgeError> {
         if config.words <= 1 {
-            return Err(PassForgeError::InvalidGenAmount(
+            return Err(PassForgeError::InvalidWordCount(
                 "Amount of words cannot be smaller than 1".into(),
             ));
         }
@@ -73,6 +127,22 @@ impl Generator for PassphraseGenerator {
         PassphraseGenerator::create_passphrase(&word_list, config.words, &config.separator)
     }
 
+    /// Generates multiple passphrases based on the provided configuration.
+    ///
+    /// # Arguments
+    ///
+    /// * `config` - A reference to the `PassphraseConfig` specifying generation parameters.
+    /// * `amount` - The number of passphrases to generate.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing a vector of generated passphrases as `String`s if successful,
+    /// or a `PassForgeError` if an error occurred during generation.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if the specified amount is less than or equal to 1,
+    /// or if the specified number of words per passphrase is less than or equal to 1.
     fn generate_multiple(
         config: &Self::Config,
         amount: usize,

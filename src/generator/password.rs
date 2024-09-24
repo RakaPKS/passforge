@@ -1,15 +1,25 @@
+//! This module implements password generation functionality.
+//!
+//! It provides a `PasswordGenerator` struct that implements the `Generator` trait,
+//! allowing for customizable password generation.
+
 use rand::Rng;
 
 use crate::config::PasswordConfig;
 use crate::generator::Generator;
 use crate::PassForgeError;
 
+/// Struct for generating passwords based on specified configurations.
 pub struct PasswordGenerator;
 
 impl PasswordGenerator {
+    /// Lowercase letters used in password generation.
     const LOWERCASE: &'static [u8] = b"abcdefghijklmnopqrstuvwxyz";
+    /// Uppercase letters used in password generation.
     const UPPERCASE: &'static [u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    /// Numbers used in password generation.
     const NUMBERS: &'static [u8] = b"0123456789";
+    /// Symbols used in password generation.
     const SYMBOLS: &'static [u8] = b"!@#$%^&*()-_=+[]{}|;:,.<>?";
 }
 
@@ -17,9 +27,21 @@ impl Generator for PasswordGenerator {
     type Config = PasswordConfig;
     type Output = String;
 
+    /// Generates a single password based on the provided configuration.
+    ///
+    /// # Arguments
+    ///
+    /// * `config` - A reference to the `PasswordConfig` specifying generation parameters.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing the generated password as a `String` if successful,
+    /// or a `PassForgeError` if an error occurred during generation.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if the specified password length is less than 1.
     fn generate(config: &Self::Config) -> Result<Self::Output, PassForgeError> {
-        // Define character sets as byte slices for memory efficiency
-
         let mut rng = rand::thread_rng();
         let length = config.length.get_length();
 
@@ -61,6 +83,21 @@ impl Generator for PasswordGenerator {
         Ok(result)
     }
 
+    /// Generates multiple passwords based on the provided configuration.
+    ///
+    /// # Arguments
+    ///
+    /// * `config` - A reference to the `PasswordConfig` specifying generation parameters.
+    /// * `amount` - The number of passwords to generate.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing a vector of generated passwords as `String`s if successful,
+    /// or a `PassForgeError` if an error occurred during generation.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if the specified amount is less than or equal to 1.
     fn generate_multiple(
         config: &Self::Config,
         amount: usize,

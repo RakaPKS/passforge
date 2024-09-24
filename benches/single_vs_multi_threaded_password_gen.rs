@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use passgen::{Generator, PasswordConfig, PasswordGenerator};
+use passforge::{Generator, Length, PasswordConfig, PasswordGenerator};
 use rayon::prelude::*;
 
 fn sequential_generation(config: &PasswordConfig, count: usize) -> Vec<String> {
@@ -16,9 +16,7 @@ fn parallel_generation(config: &PasswordConfig, count: usize) -> Vec<String> {
 }
 
 fn single_vs_multi_threaded_password_gen(c: &mut Criterion) {
-    let config = PasswordConfig::builder()
-        .length(passgen::Length::Single(16))
-        .build();
+    let config = PasswordConfig::builder().length(Length::Single(16)).build();
 
     let mut group = c.benchmark_group("Password Generation");
     for count in [10, 100, 1000, 10000].iter() {

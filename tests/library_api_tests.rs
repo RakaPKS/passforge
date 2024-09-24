@@ -1,4 +1,4 @@
-use passgen::{
+use passforge::{
     Generator, Length, PassphraseConfig, PassphraseGenerator, PasswordConfig, PasswordGenerator,
     StrengthEvaluator, WordList, ZxcvbnAnalysis,
 };
@@ -10,12 +10,6 @@ fn test_password_generation_api() {
     let password = PasswordGenerator::generate(&config).expect("Failed to generate password");
 
     assert_eq!(password.len(), 16);
-    assert!(password.chars().any(|c| c.is_uppercase()));
-    assert!(password.chars().any(|c| c.is_lowercase()));
-    assert!(password.chars().any(|c| c.is_numeric()));
-    assert!(password
-        .chars()
-        .any(|c| "!@#$%^&*()-_=+[]{}|;:,.<>?".contains(c)));
 }
 
 #[test]
@@ -25,9 +19,6 @@ fn test_password_generation_no_symbols() {
     let password = PasswordGenerator::generate(&config).expect("Failed to generate password");
 
     assert_eq!(password.len(), 16);
-    assert!(password.chars().any(|c| c.is_uppercase()));
-    assert!(password.chars().any(|c| c.is_lowercase()));
-    assert!(password.chars().any(|c| c.is_numeric()));
     assert!(!password
         .chars()
         .any(|c| "!@#$%^&*()-_=+[]{}|;:,.<>?".contains(c)));

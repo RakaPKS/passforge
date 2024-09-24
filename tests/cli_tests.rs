@@ -3,7 +3,7 @@ use predicates::prelude::*;
 
 #[test]
 fn test_cli_default_password_generation() {
-    let mut cmd = Command::cargo_bin("passgen").unwrap();
+    let mut cmd = Command::cargo_bin("passforge").unwrap();
     cmd.assert().success().stdout(
         predicate::str::is_match(r"^[a-zA-Z0-9!@#$%^&*()-_=+\[\]{}|;:,.<>?]{18}\n$").unwrap(),
     );
@@ -11,7 +11,7 @@ fn test_cli_default_password_generation() {
 
 #[test]
 fn test_cli_custom_length_password() {
-    let mut cmd = Command::cargo_bin("passgen").unwrap();
+    let mut cmd = Command::cargo_bin("passforge").unwrap();
     cmd.arg("--length").arg("24").assert().success().stdout(
         predicate::str::is_match(r"^[a-zA-Z0-9!@#$%^&*()-_=+\[\]{}|;:,.<>?]{24}\n$").unwrap(),
     );
@@ -19,7 +19,7 @@ fn test_cli_custom_length_password() {
 
 #[test]
 fn test_cli_no_symbols_password() {
-    let mut cmd = Command::cargo_bin("passgen").unwrap();
+    let mut cmd = Command::cargo_bin("passforge").unwrap();
     cmd.arg("--no-symbols")
         .assert()
         .success()
@@ -28,7 +28,7 @@ fn test_cli_no_symbols_password() {
 
 #[test]
 fn test_cli_passphrase_generation() {
-    let mut cmd = Command::cargo_bin("passgen").unwrap();
+    let mut cmd = Command::cargo_bin("passforge").unwrap();
     cmd.arg("--passphrase")
         .assert()
         .success()
@@ -37,7 +37,7 @@ fn test_cli_passphrase_generation() {
 
 #[test]
 fn test_cli_multiple_passwords() {
-    let mut cmd = Command::cargo_bin("passgen").unwrap();
+    let mut cmd = Command::cargo_bin("passforge").unwrap();
     cmd.arg("--count").arg("3").assert().success().stdout(
         predicate::str::is_match(r"^([a-zA-Z0-9!@#$%^&*()-_=+\[\]{}|;:,.<>?]{18}\n){3}$").unwrap(),
     );
@@ -45,7 +45,7 @@ fn test_cli_multiple_passwords() {
 
 #[test]
 fn test_cli_invalid_length() {
-    let mut cmd = Command::cargo_bin("passgen").unwrap();
+    let mut cmd = Command::cargo_bin("passforge").unwrap();
     cmd.arg("--length")
         .arg("0")
         .assert()
@@ -55,7 +55,7 @@ fn test_cli_invalid_length() {
 
 #[test]
 fn test_cli_strength_evaluation() {
-    let mut cmd = Command::cargo_bin("passgen").unwrap();
+    let mut cmd = Command::cargo_bin("passforge").unwrap();
     cmd.arg("--evaluate-strength")
         .assert()
         .success()
@@ -65,7 +65,7 @@ fn test_cli_strength_evaluation() {
 
 #[test]
 fn test_cli_no_capitals() {
-    let mut cmd = Command::cargo_bin("passgen").unwrap();
+    let mut cmd = Command::cargo_bin("passforge").unwrap();
     cmd.arg("--no-capitals")
         .assert()
         .success()
@@ -74,7 +74,7 @@ fn test_cli_no_capitals() {
 
 #[test]
 fn test_cli_custom_passphrase() {
-    let mut cmd = Command::cargo_bin("passgen").unwrap();
+    let mut cmd = Command::cargo_bin("passforge").unwrap();
     cmd.args(["--passphrase", "--words", "5", "--separator", "_"])
         .assert()
         .success()
@@ -83,7 +83,7 @@ fn test_cli_custom_passphrase() {
 
 #[test]
 fn test_cli_password_length_range() {
-    let mut cmd = Command::cargo_bin("passgen").unwrap();
+    let mut cmd = Command::cargo_bin("passforge").unwrap();
     cmd.args(["--min-length", "10", "--max-length", "20"])
         .assert()
         .success()
@@ -95,7 +95,7 @@ fn test_cli_password_length_range() {
 
 #[test]
 fn test_cli_invalid_word_list() {
-    let mut cmd = Command::cargo_bin("passgen").unwrap();
+    let mut cmd = Command::cargo_bin("passforge").unwrap();
     cmd.args(["--passphrase", "--word-list", "nonexistent_file.txt"])
         .assert()
         .failure()
@@ -104,7 +104,7 @@ fn test_cli_invalid_word_list() {
 
 #[test]
 fn test_cli_multiple_items_format() {
-    let mut cmd = Command::cargo_bin("passgen").unwrap();
+    let mut cmd = Command::cargo_bin("passforge").unwrap();
     cmd.args(["--count", "3"]).assert().success().stdout(
         predicate::str::is_match(r"^([a-zA-Z0-9!@#$%^&*()-_=+\[\]{}|;:,.<>?]{18}\n){3}$").unwrap(),
     );
@@ -112,7 +112,7 @@ fn test_cli_multiple_items_format() {
 
 #[test]
 fn test_cli_strength_evaluation_format() {
-    let mut cmd = Command::cargo_bin("passgen").unwrap();
+    let mut cmd = Command::cargo_bin("passforge").unwrap();
     cmd.arg("--evaluate-strength")
         .assert()
         .success()
@@ -122,7 +122,7 @@ fn test_cli_strength_evaluation_format() {
 
 #[test]
 fn test_cli_extreme_length() {
-    let mut cmd = Command::cargo_bin("passgen").unwrap();
+    let mut cmd = Command::cargo_bin("passforge").unwrap();
     cmd.args(["--length", "1000"]).assert().success().stdout(
         predicate::str::is_match(r"^[a-zA-Z0-9!@#$%^&*()-_=+\[\]{}|;:,.<>?]{1000}\n$").unwrap(),
     );

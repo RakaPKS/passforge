@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use passgen::{
+use passforge::{
     Generator, Length, PassphraseConfig, PassphraseGenerator, PasswordConfig, PasswordGenerator,
     StrengthEvaluator, WordList, ZxcvbnAnalysis,
 };

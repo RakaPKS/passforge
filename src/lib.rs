@@ -13,9 +13,20 @@
 //! - Command-line interface for easy use
 //! - Extendible through `Generator` and `StrengthEvaluator` traits.
 //!
+//! ## Getting Started
+//!
+//! To use PassForge in your project, add the following to your `Cargo.toml`:
+//!
+//! ```toml
+//! [dependencies]
+//! passforge = "0.1.0"
+//! ```
+//!
+//! Then, you can use the library in your Rust code as shown in the examples below.
+//!
 //! ## Examples
 //!
-//! ### Generating a Password
+//! Generating a Password
 //!
 //! ```
 //! use passforge::{PasswordConfig, PasswordGenerator, Generator, Length};
@@ -25,7 +36,7 @@
 //! println!("Generated password: {}", password);
 //! ```
 //!
-//! ### Creating a Passphrase
+//! Creating a Passphrase
 //!
 //! ```
 //! use passforge::{PassphraseConfig, PassphraseGenerator, Generator, WordList};
@@ -35,12 +46,12 @@
 //! println!("Generated passphrase: {}", passphrase);
 //! ```
 //!
-//! ### Evaluating Password Strength
+//! Evaluating Password Strength
 //!
 //! ```
 //! use passforge::{ZxcvbnAnalysis, StrengthEvaluator};
 //!
-//! let password = "example_password";
+//! let password = "example_password".into();
 //! let strength = ZxcvbnAnalysis::evaluate(&password).expect("Failed to evaluate password");
 //! println!("Password strength: {}", strength);
 //! ```
@@ -54,14 +65,18 @@ pub use error::PassForgeError;
 pub use generator::{Generator, PassphraseGenerator, PasswordGenerator};
 pub use strength_evaluator::{StrengthEvaluator, ZxcvbnAnalysis};
 
-/// Configuration structures for password and passphrase generation
+/// Configuration structures for password and passphrase generation,
 pub mod config;
 
-/// Error types used throughout the crate
+/// Custom error types used throughout the crate to provide
+/// detailed information about failure conditions.
 pub mod error;
 
-/// Core generation functionality for passwords and passphrases
+/// Core generation functionality for passwords and passphrases,
+/// implementing the Generator trait for different types of generators.
 pub mod generator;
 
-/// Password strength evaluation functionality
+/// Password strength evaluation functionality using the zxcvbn algorithm,
+/// providing detailed analysis of password security. Extendible by implementing the
+/// `StrengthEvaluator trait`
 pub mod strength_evaluator;
