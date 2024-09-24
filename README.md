@@ -18,7 +18,7 @@ To install PassForge, you need to have Rust and Cargo installed on your system. 
 Once you have Rust and Cargo installed, you can build and install PassForge using the following commands:
 
 ```bash
-git clone https://github.com/yourusername/passforge.git
+git clone https://github.com/RakaPKS/passforge.git
 cd passforge
 cargo install --path .
 ```
