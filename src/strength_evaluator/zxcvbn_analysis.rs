@@ -1,6 +1,6 @@
 use zxcvbn::zxcvbn;
 
-use crate::{strength_evaluator::StrengthEvaluator, PassGenError};
+use crate::{strength_evaluator::StrengthEvaluator, PassForgeError};
 
 pub struct ZxcvbnAnalysis;
 
@@ -12,18 +12,18 @@ impl StrengthEvaluator for ZxcvbnAnalysis {
     type Input = String;
     type Output = String;
 
-    fn passes_threshold(input: &Self::Input) -> Result<bool, PassGenError> {
+    fn passes_threshold(input: &Self::Input) -> Result<bool, PassForgeError> {
         if input.is_empty() {
-            return Err(PassGenError::InvalidLength(
+            return Err(PassForgeError::InvalidLength(
                 "Password cannot be empty".into(),
             ));
         }
         Ok((zxcvbn(input, &[]).score() as u8) >= Self::MIN_PASS_SCORE)
     }
 
-    fn evaluate(input: &Self::Input) -> Result<Self::Output, PassGenError> {
+    fn evaluate(input: &Self::Input) -> Result<Self::Output, PassForgeError> {
         if input.is_empty() {
-            return Err(PassGenError::InvalidLength(
+            return Err(PassForgeError::InvalidLength(
                 "Input password cannot be empty".into(),
             ));
         }

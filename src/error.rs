@@ -3,7 +3,7 @@ use std::num::ParseIntError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum PassGenError {
+pub enum PassForgeError {
     #[error("IO error: {0}")]
     Io(#[from] io::Error),
 

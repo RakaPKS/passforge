@@ -84,6 +84,29 @@ impl PasswordConfigBuilder {
             symbols: self.symbols.unwrap_or(PasswordConfig::DEFAULT_SYMBOLS),
         }
     }
+
+    pub fn build_from_preset(self, preset: ConfigPreset) -> PasswordConfig {
+        match preset {
+            ConfigPreset::Weak => PasswordConfig {
+                length: Length::Single(8),
+                capitals: true,
+                numbers: true,
+                symbols: false,
+            },
+            ConfigPreset::Average => PasswordConfig {
+                length: Length::Single(16),
+                capitals: true,
+                numbers: true,
+                symbols: true,
+            },
+            ConfigPreset::Strong => PasswordConfig {
+                length: Length::Single(32),
+                capitals: true,
+                numbers: true,
+                symbols: true,
+            },
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -140,10 +163,37 @@ impl PassphraseConfigBuilder {
             word_list: self.word_list.unwrap_or(WordList::Default),
         }
     }
+
+    pub fn build_from_preset(self, preset: ConfigPreset) -> PassphraseConfig {
+        match preset {
+            ConfigPreset::Weak => PassphraseConfig {
+                words: 4,
+                separator: "-".into(),
+                word_list: WordList::Default,
+            },
+            ConfigPreset::Average => PassphraseConfig {
+                words: 8,
+                separator: "-".into(),
+                word_list: WordList::Default,
+            },
+            ConfigPreset::Strong => PassphraseConfig {
+                words: 16,
+                separator: "-".into(),
+                word_list: WordList::Default,
+            },
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
 pub enum WordList {
     Default,
     Custom(PathBuf),
+}
+
+#[derive(Clone, Debug)]
+pub enum ConfigPreset {
+    Weak,
+    Average,
+    Strong,
 }

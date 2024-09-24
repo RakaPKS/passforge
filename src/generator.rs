@@ -4,15 +4,15 @@ pub mod password;
 pub use passphrase::PassphraseGenerator;
 pub use password::PasswordGenerator;
 
-use crate::PassGenError;
+use crate::PassForgeError;
 
 pub trait Generator {
     type Config;
     type Output;
 
-    fn generate(config: &Self::Config) -> Result<Self::Output, PassGenError>;
+    fn generate(config: &Self::Config) -> Result<Self::Output, PassForgeError>;
     fn generate_multiple(
         config: &Self::Config,
         amount: usize,
-    ) -> Result<Vec<Self::Output>, PassGenError>;
+    ) -> Result<Vec<Self::Output>, PassForgeError>;
 }

@@ -1,8 +1,9 @@
 use std::{fmt::Display, path::PathBuf, process};
 
 use clap::Parser;
-use passgen::{
-    Generator, Length, PassGenError, PassphraseConfig, PassphraseGenerator, PasswordConfig,
+use passforge::{
+    config::{ConfigPreset, PassphraseConfigBuilder, PasswordConfigBuilder},
+    Generator, Length, PassForgeError, PassphraseConfig, PassphraseGenerator, PasswordConfig,
     PasswordGenerator, StrengthEvaluator, WordList, ZxcvbnAnalysis,
 };
 
@@ -59,6 +60,11 @@ struct Cli {
     /// Show password strength evaluation
     #[arg(short = 'e', long = "evaluate-strength")]
     evaluate_strength: bool,
+
+    /// Preset for quick generation, disables all flags aside --passhrase/-p and
+    /// -e/--evaluate-strength. Choices: Weak, Average, Strong
+    #[arg(long = "preset")]
+    preset: Option<String>,
 }
 
 fn generate_items<G, S>(
@@ -67,7 +73,7 @@ fn generate_items<G, S>(
     count: usize,
     evaluate_strength: bool,
     _: &S,
-) -> Result<(), PassGenError>
+) -> Result<(), PassForgeError>
 where
     G: Generator,
     G::Output: Display,
@@ -79,7 +85,7 @@ where
     } else if count == 1 {
         vec![G::generate(config)?]
     } else {
-        return Err(PassGenError::InvalidGenAmount(
+        return Err(PassForgeError::InvalidGenAmount(
             "Count cannot be smaller than 1".into(),
         ));
     };
@@ -99,24 +105,19 @@ where
 
     Ok(())
 }
-fn gen_password(input: Cli) -> Result<(), PassGenError> {
-    let length = match input.max_length {
-        Some(max) if max > input.min_length => Length::Range(input.min_length..=max),
-        Some(max) if max == input.min_length => Length::Single(input.min_length),
-        Some(_) => {
-            return Err(PassGenError::InvalidLength(
-                "Maximum length must be greater than or equal to minimum length".into(),
-            ))
-        }
-        None => Length::Single(input.min_length),
+fn gen_password(input: Cli) -> Result<(), PassForgeError> {
+    let config = if let Some(preset_str) = input.preset {
+        let preset = parse_preset(&preset_str)?;
+        PasswordConfigBuilder::default().build_from_preset(preset)
+    } else {
+        let length = parse_length(input.min_length, input.max_length)?;
+        PasswordConfig::new(
+            length,
+            !input.no_capitals,
+            !input.no_numbers,
+            !input.no_symbols,
+        )
     };
-
-    let config = PasswordConfig::new(
-        length,
-        !input.no_capitals,
-        !input.no_numbers,
-        !input.no_symbols,
-    );
 
     let generator = PasswordGenerator;
     let strength_evaluator = ZxcvbnAnalysis;
@@ -129,13 +130,17 @@ fn gen_password(input: Cli) -> Result<(), PassGenError> {
     )
 }
 
-fn gen_passphrase(input: Cli) -> Result<(), PassGenError> {
-    let word_list = match input.word_list {
-        Some(path) => WordList::Custom(path),
-        None => WordList::Default,
+fn gen_passphrase(input: Cli) -> Result<(), PassForgeError> {
+    let config = if let Some(preset_str) = input.preset {
+        let preset = parse_preset(&preset_str)?;
+        PassphraseConfigBuilder::default().build_from_preset(preset)
+    } else {
+        let word_list = match input.word_list {
+            Some(path) => WordList::Custom(path),
+            None => WordList::Default,
+        };
+        PassphraseConfig::new(input.words, input.separator, word_list)
     };
-
-    let config = PassphraseConfig::new(input.words, input.separator, word_list);
 
     let generator = PassphraseGenerator;
     let strength_evaluator = ZxcvbnAnalysis;
@@ -148,6 +153,27 @@ fn gen_passphrase(input: Cli) -> Result<(), PassGenError> {
     )
 }
 
+fn parse_preset(preset_str: &str) -> Result<ConfigPreset, PassForgeError> {
+    match preset_str.to_lowercase().as_str() {
+        "weak" => Ok(ConfigPreset::Weak),
+        "average" => Ok(ConfigPreset::Average),
+        "strong" => Ok(ConfigPreset::Strong),
+        _ => Err(PassForgeError::InvalidConfig(
+            "Invalid preset. Choices are: Weak, Average, Strong".into(),
+        )),
+    }
+}
+
+fn parse_length(min: usize, max: Option<usize>) -> Result<Length, PassForgeError> {
+    match max {
+        Some(max) if max > min => Ok(Length::Range(min..=max)),
+        Some(max) if max == min => Ok(Length::Single(min)),
+        Some(_) => Err(PassForgeError::InvalidLength(
+            "Maximum length must be greater than or equal to minimum length".into(),
+        )),
+        None => Ok(Length::Single(min)),
+    }
+}
 fn main() {
     let cli = Cli::parse();
 

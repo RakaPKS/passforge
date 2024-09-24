@@ -3,7 +3,7 @@ use std::io::{BufRead, BufReader};
 
 use crate::config::{PassphraseConfig, WordList};
 use crate::generator::Generator;
-use crate::PassGenError;
+use crate::PassForgeError;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
@@ -16,7 +16,7 @@ impl PassphraseGenerator {
         word_list: &Vec<String>,
         words: usize,
         separator: &String,
-    ) -> Result<String, PassGenError> {
+    ) -> Result<String, PassForgeError> {
         let mut rng = thread_rng();
 
         let passphrase_words: Vec<&str> = word_list
@@ -27,7 +27,7 @@ impl PassphraseGenerator {
         Ok(passphrase_words.join(separator))
     }
 
-    fn get_word_list(word_list: &WordList) -> Result<Vec<String>, PassGenError> {
+    fn get_word_list(word_list: &WordList) -> Result<Vec<String>, PassForgeError> {
         let words: Vec<String> = PassphraseGenerator::load_file(word_list)?
             .into_iter()
             .filter_map(|line| {
@@ -40,13 +40,13 @@ impl PassphraseGenerator {
             })
             .collect();
         if words.is_empty() {
-            return Err(PassGenError::WordListError(
+            return Err(PassForgeError::WordListError(
                 "Word list is empty or invalid".into(),
             ));
         }
         Ok(words)
     }
-    fn load_file(word_list: &WordList) -> Result<Vec<String>, PassGenError> {
+    fn load_file(word_list: &WordList) -> Result<Vec<String>, PassForgeError> {
         let line = match word_list {
             WordList::Default => DEFAULT_WORD_LIST.lines().map(String::from).collect(),
             WordList::Custom(path) => {
@@ -63,9 +63,9 @@ impl Generator for PassphraseGenerator {
     type Config = PassphraseConfig;
     type Output = String;
 
-    fn generate(config: &Self::Config) -> Result<Self::Output, PassGenError> {
+    fn generate(config: &Self::Config) -> Result<Self::Output, PassForgeError> {
         if config.words <= 1 {
-            return Err(PassGenError::InvalidGenAmount(
+            return Err(PassForgeError::InvalidGenAmount(
                 "Amount of words cannot be smaller than 1".into(),
             ));
         }
@@ -76,14 +76,14 @@ impl Generator for PassphraseGenerator {
     fn generate_multiple(
         config: &Self::Config,
         amount: usize,
-    ) -> Result<Vec<Self::Output>, PassGenError> {
+    ) -> Result<Vec<Self::Output>, PassForgeError> {
         if amount <= 1 {
-            return Err(PassGenError::InvalidGenAmount(
+            return Err(PassForgeError::InvalidGenAmount(
                 "Amount cannot be smaller than 1".into(),
             ));
         }
         if config.words <= 1 {
-            return Err(PassGenError::InvalidWordCount(
+            return Err(PassForgeError::InvalidWordCount(
                 "Amount of words cannot be smaller than 1".into(),
             ));
         }

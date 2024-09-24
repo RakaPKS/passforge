@@ -2,7 +2,7 @@ use rand::Rng;
 
 use crate::config::PasswordConfig;
 use crate::generator::Generator;
-use crate::PassGenError;
+use crate::PassForgeError;
 
 pub struct PasswordGenerator;
 
@@ -17,14 +17,14 @@ impl Generator for PasswordGenerator {
     type Config = PasswordConfig;
     type Output = String;
 
-    fn generate(config: &Self::Config) -> Result<Self::Output, PassGenError> {
+    fn generate(config: &Self::Config) -> Result<Self::Output, PassForgeError> {
         // Define character sets as byte slices for memory efficiency
 
         let mut rng = rand::thread_rng();
         let length = config.length.get_length();
 
         if length < 1 {
-            return Err(PassGenError::InvalidLength(
+            return Err(PassForgeError::InvalidLength(
                 "Length of password cannot be less than 1".into(),
             ));
         }
@@ -64,9 +64,9 @@ impl Generator for PasswordGenerator {
     fn generate_multiple(
         config: &Self::Config,
         amount: usize,
-    ) -> Result<Vec<Self::Output>, PassGenError> {
+    ) -> Result<Vec<Self::Output>, PassForgeError> {
         if amount <= 1 {
-            return Err(PassGenError::InvalidGenAmount(
+            return Err(PassForgeError::InvalidGenAmount(
                 "Amount cannot be smaller than 1".into(),
             ));
         }
