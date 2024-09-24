@@ -13,6 +13,9 @@ pub enum PassGenError {
     #[error("Invalid word count: {0}")]
     InvalidWordCount(String),
 
+    #[error("Invalid generation amount: {0}")]
+    InvalidGenAmount(String),
+
     #[error("Invalid configuration: {0}")]
     InvalidConfig(String),
 

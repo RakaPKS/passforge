@@ -2,8 +2,8 @@ use std::{fmt::Display, path::PathBuf, process};
 
 use clap::Parser;
 use passgen::{
-    Generator, Length, PassphraseConfig, PassphraseGenerator, PasswordConfig, PasswordGenerator,
-    StrengthEvaluator, WordList, ZxcvbnAnalysis,
+    Generator, Length, PassGenError, PassphraseConfig, PassphraseGenerator, PasswordConfig,
+    PasswordGenerator, StrengthEvaluator, WordList, ZxcvbnAnalysis,
 };
 
 #[derive(Parser, Debug)]
@@ -67,7 +67,7 @@ fn generate_items<G, S>(
     count: usize,
     evaluate_strength: bool,
     _: &S,
-) -> Result<(), Box<dyn std::error::Error>>
+) -> Result<(), PassGenError>
 where
     G: Generator,
     G::Output: Display,
@@ -79,7 +79,9 @@ where
     } else if count == 1 {
         vec![G::generate(config)?]
     } else {
-        return Err("Count cannot be smaller than 1".into());
+        return Err(PassGenError::InvalidGenAmount(
+            "Count cannot be smaller than 1".into(),
+        ));
     };
 
     for item in items {
@@ -97,12 +99,14 @@ where
 
     Ok(())
 }
-fn gen_password(input: Cli) -> Result<(), Box<dyn std::error::Error>> {
+fn gen_password(input: Cli) -> Result<(), PassGenError> {
     let length = match input.max_length {
         Some(max) if max > input.min_length => Length::Range(input.min_length..=max),
         Some(max) if max == input.min_length => Length::Single(input.min_length),
         Some(_) => {
-            return Err("Maximum length must be greater than or equal to minimum length".into())
+            return Err(PassGenError::InvalidLength(
+                "Maximum length must be greater than or equal to minimum length".into(),
+            ))
         }
         None => Length::Single(input.min_length),
     };
@@ -125,7 +129,7 @@ fn gen_password(input: Cli) -> Result<(), Box<dyn std::error::Error>> {
     )
 }
 
-fn gen_passphrase(input: Cli) -> Result<(), Box<dyn std::error::Error>> {
+fn gen_passphrase(input: Cli) -> Result<(), PassGenError> {
     let word_list = match input.word_list {
         Some(path) => WordList::Custom(path),
         None => WordList::Default,
@@ -147,14 +151,17 @@ fn gen_passphrase(input: Cli) -> Result<(), Box<dyn std::error::Error>> {
 fn main() {
     let cli = Cli::parse();
 
-    let err = if cli.passphrase {
+    let result = if cli.passphrase {
         gen_passphrase(cli)
     } else {
         gen_password(cli)
     };
 
-    if err.is_err() {
-        process::exit(1)
+    match result {
+        Ok(_) => process::exit(0),
+        Err(msg) => {
+            eprintln!("Error: {}", msg);
+            process::exit(1)
+        }
     }
-    process::exit(0)
 }
