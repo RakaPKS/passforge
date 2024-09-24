@@ -12,11 +12,11 @@ impl Generator for PassphraseGenerator {
         todo!("Implement passphrase generation")
     }
 
-    fn generate_multiple(&self, config: &Self::Config, amount: usize) -> Result<Vec<Self::Output>, Box<dyn std::error::Error>> {
+    fn generate_multiple(
+        &self,
+        config: &Self::Config,
+        amount: usize,
+    ) -> Result<Vec<Self::Output>, Box<dyn std::error::Error>> {
         (0..amount).map(|_| self.generate(config)).collect()
-    }
-
-    fn evaluate_strength(&self, output: &Self::Output) -> Result<String, Box<dyn std::error::Error>>  {
-        todo!()
     }
 }

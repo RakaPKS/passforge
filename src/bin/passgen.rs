@@ -1,8 +1,9 @@
-use std::process::Output;
+use std::fmt::Display;
 
 use clap::Parser;
 use passgen::{
     Generator, Length, PassphraseConfig, PassphraseGenerator, PasswordConfig, PasswordGenerator,
+    StrengthEvaluator, ZxcvbnAnalysis,
 };
 
 #[derive(Parser, Debug)]
@@ -56,28 +57,42 @@ struct Cli {
     evaluate_strength: bool,
 }
 
-fn generate_items<G: Generator>(
+fn generate_items<G, S>(
     generator: &G,
     config: &G::Config,
     count: usize,
     evaluate_strength: bool,
-) -> Result<(), Box<dyn std::error::Error>> {
+    _strength_evaluator: &S,
+) -> Result<(), Box<dyn std::error::Error>>
+where
+    G: Generator,
+    G::Output: Display,
+    S: StrengthEvaluator<Input = String>,
+    S::Output: Display,
+{
     let items = if count > 1 {
         generator.generate_multiple(config, count)?
-    } else {
+    } else if count == 1 {
         vec![generator.generate(config)?]
+    } else {
+        return Err("Count cannot be smaller than 1".into());
     };
 
     for item in items {
         println!("{}", item);
         if evaluate_strength {
-            println!("{}", generator.evaluate_strength(&item)?);
+            match item.to_string().parse() {
+                Ok(password) => match S::evaluate(&password) {
+                    Ok(evaluation) => println!("Strength: {}", evaluation),
+                    Err(e) => eprintln!("Error evaluating strength: {}", e),
+                },
+                Err(_) => eprintln!("Unable to evaluate strength for this type of output"),
+            }
         }
     }
 
     Ok(())
 }
-
 fn gen_password(input: Cli) -> Result<(), Box<dyn std::error::Error>> {
     let length = match input.max_length {
         Some(max) if max > input.min_length => Length::Range(input.min_length..=max),
@@ -90,21 +105,34 @@ fn gen_password(input: Cli) -> Result<(), Box<dyn std::error::Error>> {
 
     let config = PasswordConfig::new(
         length,
-        input.evaluate_strength,
         !input.no_capitals,
         !input.no_numbers,
         !input.no_symbols,
     );
 
     let generator = PasswordGenerator;
-    generate_items(&generator, &config, input.count, input.evaluate_strength)
+    let strength_evaluator = ZxcvbnAnalysis;
+    generate_items(
+        &generator,
+        &config,
+        input.count,
+        input.evaluate_strength,
+        &strength_evaluator,
+    )
 }
 
 fn gen_passphrase(input: Cli) -> Result<(), Box<dyn std::error::Error>> {
-    let config = PassphraseConfig::new(input.words, input.separator, input.evaluate_strength);
+    let config = PassphraseConfig::new(input.words, input.separator);
 
     let generator = PassphraseGenerator;
-    generate_items(&generator, &config, input.count, input.evaluate_strength)
+    let strength_evaluator = ZxcvbnAnalysis;
+    generate_items(
+        &generator,
+        &config,
+        input.count,
+        input.evaluate_strength,
+        &strength_evaluator,
+    )
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

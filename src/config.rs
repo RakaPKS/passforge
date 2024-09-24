@@ -2,11 +2,10 @@ use std::ops::RangeInclusive;
 
 #[derive(Debug, Clone)]
 pub struct PasswordConfig {
-    length: Length,
-    evaluate_strength: bool,
-    capitals: bool,
-    numbers: bool,
-    symbols: bool,
+    pub length: Length,
+    pub capitals: bool,
+    pub numbers: bool,
+    pub symbols: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -29,20 +28,13 @@ impl Length {
 
 impl PasswordConfig {
     pub const DEFAULT_LENGTH: usize = 18;
-    pub const DEFAULT_EVALUATE_STRENGTH: bool = false;
     pub const DEFAULT_CAPITALS: bool = true;
     pub const DEFAULT_NUMBERS: bool = true;
     pub const DEFAULT_SYMBOLS: bool = true;
-    pub fn new(
-        length: Length,
-        evaluate_strength: bool,
-        capitals: bool,
-        numbers: bool,
-        symbols: bool,
-    ) -> Self {
+
+    pub fn new(length: Length, capitals: bool, numbers: bool, symbols: bool) -> Self {
         Self {
             length,
-            evaluate_strength,
             capitals,
             numbers,
             symbols,
@@ -56,7 +48,6 @@ impl PasswordConfig {
 #[derive(Default)]
 pub struct PasswordConfigBuilder {
     length: Option<Length>,
-    evaluate_strength: Option<bool>,
     capitals: Option<bool>,
     numbers: Option<bool>,
     symbols: Option<bool>,
@@ -65,11 +56,6 @@ pub struct PasswordConfigBuilder {
 impl PasswordConfigBuilder {
     pub fn length(mut self, length: Length) -> Self {
         self.length = Some(length);
-        self
-    }
-
-    pub fn evaluate_strength(mut self, evaluate: bool) -> Self {
-        self.evaluate_strength = Some(evaluate);
         self
     }
 
@@ -93,9 +79,6 @@ impl PasswordConfigBuilder {
             length: self
                 .length
                 .unwrap_or(Length::Single(PasswordConfig::DEFAULT_LENGTH)),
-            evaluate_strength: self
-                .evaluate_strength
-                .unwrap_or(PasswordConfig::DEFAULT_EVALUATE_STRENGTH),
             capitals: self.capitals.unwrap_or(PasswordConfig::DEFAULT_CAPITALS),
             numbers: self.numbers.unwrap_or(PasswordConfig::DEFAULT_NUMBERS),
             symbols: self.symbols.unwrap_or(PasswordConfig::DEFAULT_SYMBOLS),
@@ -107,20 +90,14 @@ impl PasswordConfigBuilder {
 pub struct PassphraseConfig {
     words: usize,
     separator: String,
-    evaluate_strength: bool,
 }
 
 impl PassphraseConfig {
-    pub const DEFAULT_WORDS: usize = 4;
+    pub const DEFAULT_WORDS: usize = 6;
     pub const DEFAULT_SEPARATOR: &'static str = "-";
-    pub const DEFAULT_EVALUATE_STRENGTH: bool = false;
 
-    pub fn new(words: usize, separator: String, evaluate_strength: bool) -> Self {
-        Self {
-            words,
-            separator,
-            evaluate_strength,
-        }
+    pub fn new(words: usize, separator: String) -> Self {
+        Self { words, separator }
     }
     pub fn builder() -> PassphraseConfigBuilder {
         PassphraseConfigBuilder::default()
@@ -130,7 +107,6 @@ impl PassphraseConfig {
 pub struct PassphraseConfigBuilder {
     words: Option<usize>,
     separator: Option<String>,
-    evaluate_strength: Option<bool>,
 }
 
 impl PassphraseConfigBuilder {
@@ -144,20 +120,12 @@ impl PassphraseConfigBuilder {
         self
     }
 
-    pub fn evaluate_strength(mut self, evaluate: bool) -> Self {
-        self.evaluate_strength = Some(evaluate);
-        self
-    }
-
     pub fn build(self) -> PassphraseConfig {
         PassphraseConfig {
             words: self.words.unwrap_or(PassphraseConfig::DEFAULT_WORDS),
             separator: self
                 .separator
                 .unwrap_or(PassphraseConfig::DEFAULT_SEPARATOR.to_string()),
-            evaluate_strength: self
-                .evaluate_strength
-                .unwrap_or(PassphraseConfig::DEFAULT_EVALUATE_STRENGTH),
         }
     }
 }
