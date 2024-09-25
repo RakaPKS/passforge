@@ -1,6 +1,6 @@
 [package]
 name = "passforge"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Raka Schipperheijn raka@rpkschipperheijn.com"]
 edition = "2021"
 description = "A robust and flexible CLI password generator."
